@@ -1,0 +1,9 @@
+Package:
+ sources:
+  - git:
+     src: 'https://github.com/NXPower/ovs.git'
+     branch: '2.5.2-nutanix'
+     commit_id: '052d653e644ecbc52c103a80d50cd8c74184a1ae'
+ version:
+  file: 'configure.ac'
+  regex: 'AC_INIT\(\[[^]]+\],\s*\[([\d.]+)\]'
