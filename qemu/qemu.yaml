@@ -3,4 +3,4 @@ Package:
   - git:
      src: 'https://github.com/NXPower/qemu.git'
      branch: 'hostos-2.0-nutanix'
-     commit_id: '1216973c652ed476b4fc074cafd16c2d0a658aec'
+     commit_id: 'f8c95bbdd975b0893e9588ceef9347556e5e62f7'
