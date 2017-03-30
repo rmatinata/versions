@@ -387,7 +387,7 @@
 Summary: Library providing a simple virtualization API
 Name: libvirt
 Version: 2.2.0
-Release: 7%{gitcommittag}%{?dist}
+Release: 7%{?dist}%{?buildid}
 ExclusiveArch: ppc64 ppc64le x86_64 s390x
 Source0: %{name}.tar.gz
 License: LGPLv2+
