@@ -3,7 +3,7 @@ Package:
   - git:
      src: 'https://github.com/NXPower/libvirt.git'
      branch: 'hostos-2.0-nutanix'
-     commit_id: 'f25cbfdb9df3e19285b848b74dd0541ae62dcbf5'
+     commit_id: 'a94fbe3c53226a635f0635bf3f59b283b4a7ff2f'
  version:
   file: 'configure.ac'
   regex: 'AC_INIT\(\[[^]]+\],\s*\[([\d.]+)\]'
