@@ -90,6 +90,7 @@
 
 %global need_qemu_kvm %{with kvmonly}
 %global need_kvm_modfile 0
+%global need_kvm_setup 0
 
 # These values for system_xyz are overridden below for non-kvmonly builds.
 # Instead, these values for kvm_package are overridden below for kvmonly builds.
@@ -113,6 +114,7 @@
 %global kvm_target    ppc64
 %global need_kvm_modfile 1
 %global need_qemu_kvm 1
+%global need_kvm_setup 1
 %endif
 %ifarch s390x
 %global system_s390x  kvm
@@ -229,6 +231,11 @@ Source12: bridge.conf
 
 # qemu-kvm back compat wrapper
 Source13: qemu-kvm-ppc64.sh
+
+# systemd service for turning off smt on ppc
+Source21: kvm-setup
+Source22: kvm-setup.service
+Source23: 85-kvm.preset
 
 BuildRequires: numactl-devel, numactl-libs
 
@@ -1032,6 +1039,13 @@ mkdir -p $RPM_BUILD_ROOT%{_udevdir}
 install -m 0644 %{SOURCE10} $RPM_BUILD_ROOT%{_unitdir}
 install -m 0644 %{SOURCE11} $RPM_BUILD_ROOT%{_udevdir}
 
+# Install kvm-setup service
+%if %{need_kvm_setup}
+install -D -p -m 755 %{SOURCE21} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/kvm-setup
+install -D -p -m 644 %{SOURCE22} $RPM_BUILD_ROOT%{_unitdir}/kvm-setup.service
+install -D -p -m 644 %{SOURCE23} $RPM_BUILD_ROOT%{_presetdir}/85-kvm.preset
+%endif
+
 # Install rules to use the bridge helper with libvirt's virbr0
 install -m 0644 %{SOURCE12} $RPM_BUILD_ROOT%{_sysconfdir}/qemu
 chmod u+s $RPM_BUILD_ROOT%{_libexecdir}/qemu-bridge-helper
@@ -1112,6 +1126,13 @@ rm -f $RPM_BUILD_ROOT%{_libexecdir}/qemu-bridge-helper
 sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 setfacl --remove-all /dev/kvm &> /dev/null || :
 udevadm trigger --subsystem-match=misc --sysname-match=kvm --action=add || :
+%if %{need_kvm_setup}
+systemctl daemon-reload # Make sure it sees the new presets and unitfile
+%systemd_post kvm-setup.service
+if systemctl is-enabled kvm-setup.service > /dev/null; then
+  systemctl start kvm-setup.service
+fi
+%endif
 %endif
 
 %if %{without separate_kvm}
@@ -1477,6 +1498,11 @@ getent passwd qemu >/dev/null || \
 %ifarch ppc64 ppc64le
 %{?kvm_files:}
 %{?qemu_kvm_files:}
+%endif
+%if %{need_kvm_setup}
+%{_prefix}/lib/systemd/kvm-setup
+%{_unitdir}/kvm-setup.service
+%{_presetdir}/85-kvm.preset
 %endif
 %endif
 
