@@ -25,7 +25,10 @@ Requires: epel-release >= 7
 # openvswitch selinux issue
 # https://github.com/open-power-host-os/builds/issues/226
 Source1001: hostos-openvswitch.te
-Requires(post): policycoreutils
+Requires(pre): policycoreutils
+Requires(pre): coreutils
+Requires(pre): selinux-policy
+Requires(pre): selinux-policy-targeted
 BuildRequires: checkpolicy
 BuildRequires: policycoreutils-python
 
@@ -221,6 +224,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Apr 05 2017 Murilo Opsfelder Araújo <muriloo@linux.vnet.ibm.com> - 2.5-2.alpha
+- Update package dependencies for SELinux (https://github.com/open-power-host-os/builds/issues/226)
+
 * Fri Mar 31 2017 OpenPOWER Host OS Builds Bot <open-power-host-os-builds-bot@users.noreply.github.com> - 2.0-9
 - Update package dependencies
 
