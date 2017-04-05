@@ -39,8 +39,8 @@
 # RHEL-specific defaults:
 %bcond_with    kvmonly          # enabled
 %bcond_without exclusive_x86_64 # enabled
-%bcond_without rbd              # enabled
-%bcond_without spice            # enabled
+%bcond_with    rbd              # enabled
+%bcond_with    spice            # enabled
 %bcond_without seccomp          # enabled
 %bcond_with    xfsprogs         # enabled
 %bcond_with    separate_kvm     # disabled - for EPEL
@@ -813,7 +813,7 @@ sed -i.debug 's/"-g $CFLAGS"/"$CFLAGS"/g' configure
     --extra-cflags="%{optflags} -fPIE -DPIE -mtune=power8 -mcpu=power8" \
     --disable-werror \
     --target-list="$buildarch" \
-    --audio-drv-list=pa,sdl,alsa,oss \
+    --audio-drv-list= \
     --enable-kvm \
     --disable-xen \
     --enable-numa \
@@ -824,7 +824,9 @@ sed -i.debug 's/"-g $CFLAGS"/"$CFLAGS"/g' configure
 %if %{without rbd}
     --disable-rbd \
 %endif
-    --enable-curl \
+    --disable-curl \
+    --block-drv-rw-whitelist=raw,file,host_device,iscsi \
+    --block-drv-ro-whitelist= \
     "$@"
 
 echo "config-host.mak contents:"
