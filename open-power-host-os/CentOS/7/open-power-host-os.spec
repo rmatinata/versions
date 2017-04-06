@@ -19,9 +19,6 @@ BuildArch: noarch
 
 Summary: OpenPOWER Host OS release
 
-Source0: open-power-host-os-smt.service
-Source1: 90-open-power-host-os-default.preset
-
 Requires: centos-release >= 7
 Requires: epel-release >= 7
 
@@ -175,8 +172,6 @@ Requires(post): systemtap = 3.1-2.el7.centos
 
 
 %prep
-install -pm 644 %{SOURCE0} .
-install -pm 644 %{SOURCE1} .
 
 %build
 
@@ -201,12 +196,6 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}
 install -pm 444 open-power-host-os-release \
         $RPM_BUILD_ROOT%{_sysconfdir}/open-power-host-os-release
 
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/systemd/system-preset
-cp 90-open-power-host-os-default.preset $RPM_BUILD_ROOT%{_libdir}/systemd/system-preset
-
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/systemd
-cp open-power-host-os-smt.service $RPM_BUILD_ROOT%{_libdir}/systemd
-
 %post release
 
 # load openvswitch selinux policy
@@ -222,10 +211,6 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0644, root, root) %{_sysconfdir}/selinux/open-power-host-os/hostos-openvswitch.te
 %attr(0644, root, root) %{_sysconfdir}/selinux/open-power-host-os/hostos-openvswitch.mod
 %attr(0644, root, root) %{_sysconfdir}/selinux/open-power-host-os/hostos-openvswitch.pp
-
-%attr(0644, root, root) %{_libdir}/systemd/system-preset/90-open-power-host-os-default.preset
-
-%attr(0644, root, root) %{_libdir}/systemd/open-power-host-os-smt.service
 
 %files all
 %files base
@@ -248,9 +233,6 @@ rm -rf $RPM_BUILD_ROOT
 
 * Wed Mar 29 2017 OpenPOWER Host OS Builds Bot <open-power-host-os-builds-bot@users.noreply.github.com> - 2.0-6.beta
 - Update package dependencies
-
-* Wed Mar 29 2017 Lucas Tadeu Teixeira <ltadeu@br.ibm.com> 2.0-5.alpha
-- Add systemd service to disable SMT
 
 * Fri Mar 24 2017 Olav Philipp Henschel  <olavph@linux.vnet.ibm.com> - 2.0-4.alpha
 - Explicitly mention transitive dependencies. This forces the packages versions
