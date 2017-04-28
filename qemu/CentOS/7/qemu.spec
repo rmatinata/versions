@@ -875,6 +875,7 @@ make DESTDIR=$RPM_BUILD_ROOT install
 
 %if 0%{?need_qemu_kvm}
 install -m 0755 %{SOURCE13} $RPM_BUILD_ROOT%{_bindir}/qemu-kvm
+install -m 0755 %{SOURCE13} $RPM_BUILD_ROOT%{_libexecdir}/qemu-kvm
 %endif
 
 %if %{with kvmonly}
@@ -1178,6 +1179,7 @@ getent passwd qemu >/dev/null || \
 %if 0%{?need_qemu_kvm}
 %global qemu_kvm_files \
 %{_bindir}/qemu-kvm \
+%{_libexecdir}/qemu-kvm \
 %{_mandir}/man1/qemu-kvm.1*
 %endif
 
