@@ -39,8 +39,8 @@
 # RHEL-specific defaults:
 %bcond_with    kvmonly          # enabled
 %bcond_without exclusive_x86_64 # enabled
-%bcond_with    rbd              # enabled
-%bcond_with    spice            # enabled
+%bcond_with    rbd              # disabled
+%bcond_with    spice            # disabled
 %bcond_without seccomp          # enabled
 %bcond_with    xfsprogs         # enabled
 %bcond_with    separate_kvm     # disabled - for EPEL
@@ -59,9 +59,6 @@
 
 %global SLOF_gittagdate 20160525
 
-# pkvm wants seccomp
-%global have_seccomp 1
-
 %global kvm_archs ppc64 ppc64le
 %if %{without separate_kvm}
 %global kvm_archs ppc64 ppc64le s390x
@@ -70,22 +67,6 @@
 %endif
 %if %{with exclusive_x86_64}
 %global kvm_archs x86_64 ppc64le
-%endif
-
-
-%global have_usbredir 1
-
-%ifarch %{ix86} x86_64
-%if %{with seccomp}
-%global have_seccomp 1
-%endif
-%if %{with spice}
-%global have_spice   1
-%endif
-%else
-%if 0%{?rhel}
-%global have_usbredir 0
-%endif
 %endif
 
 %global need_qemu_kvm %{with kvmonly}
@@ -238,13 +219,10 @@ Source22: kvm-setup.service
 Source23: 85-kvm.preset
 
 BuildRequires: numactl-devel, numactl-libs
-
-%if 0%{?rhel}
-BuildRequires: SDL-devel
-%else
-BuildRequires: SDL2-devel
-%endif
+BuildRequires: glib2-devel
 BuildRequires: zlib-devel
+BuildRequires: lzo-devel
+BuildRequires: snappy-devel
 BuildRequires: which
 BuildRequires: chrpath
 BuildRequires: texi2html
@@ -254,33 +232,16 @@ BuildRequires: libtool
 BuildRequires: libaio-devel
 BuildRequires: rsync
 BuildRequires: pciutils-devel
-BuildRequires: pulseaudio-libs-devel
 BuildRequires: libiscsi-devel
 BuildRequires: ncurses-devel
 BuildRequires: libattr-devel
-%if 0%{?have_usbredir:1}
 BuildRequires: usbredir-devel >= 0.5.2
-%endif
 BuildRequires: texinfo
 # for /usr/bin/pod2man
 %if 0%{?fedora} > 18
 BuildRequires: perl-podlators
 %endif
-%if 0%{?have_spice:1}
-BuildRequires: spice-protocol >= 0.12.2
-BuildRequires: spice-server-devel >= 0.12.0
-%endif
-%if 0%{?have_seccomp:1}
 BuildRequires: libseccomp-devel >= 2.1.0
-%endif
-# For network block driver
-BuildRequires: libcurl-devel
-%if %{with rbd}
-# For rbd block driver
-#BuildRequires: ceph-devel >= 0.61
-BuildRequires: librbd1-devel
-BuildRequires: librados2-devel
-%endif
 # We need both because the 'stap' binary is probed for by configure
 BuildRequires: systemtap
 BuildRequires: systemtap-sdt-devel
@@ -296,10 +257,6 @@ BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 # For uuid generation
 BuildRequires: libuuid-devel
-# For BlueZ device support
-BuildRequires: bluez-libs-devel
-# For Braille device support
-BuildRequires: brlapi-devel
 %if 0%{?need_fdt:1}
 # For FDT device tree support
 BuildRequires: libfdt-devel
@@ -312,12 +269,6 @@ BuildRequires: pixman-devel
 # For gluster support
 BuildRequires: glusterfs-devel >= 3.4.0
 BuildRequires: glusterfs-api-devel >= 3.4.0
-%endif
-# Needed for usb passthrough for qemu >= 1.5
-BuildRequires: libusbx-devel
-# SSH block driver
-%if 0%{?fedora} >= 20
-BuildRequires: libssh2-devel
 %endif
 %if %{with gtk}
 # GTK frontend
@@ -526,9 +477,7 @@ Requires: seavgabios-bin
 Requires: sgabios-bin
 #Requires: ipxe-roms-qemu >= 20130517-2.gitc4bce43
 Requires: ipxe-roms-qemu
-%if 0%{?have_seccomp:1}
 Requires: libseccomp >= 1.0.0
-%endif
 
 %description %{system_x86}
 QEMU is a generic and open source processor emulator which achieves a good
@@ -813,21 +762,65 @@ sed -i.debug 's/"-g $CFLAGS"/"$CFLAGS"/g' configure
     --extra-cflags="%{optflags} -fPIE -DPIE -mtune=power8 -mcpu=power8" \
     --disable-werror \
     --target-list="$buildarch" \
+    --with-coroutine=ucontext \
+    --disable-archipelago \
+    --disable-bluez \
+    --disable-brlapi \
+    --disable-cap-ng \
+    --enable-coroutine-pool \
+    --disable-curl \
+    --disable-curses \
+    --disable-debug-tcg \
+    --enable-docs \
+    --disable-gtk \
+    --enable-kvm \
+    --enable-libiscsi \
+    --disable-libnfs \
+    --disable-libssh2 \
+    --disable-libusb \
+    --disable-bzip2 \
+    --enable-linux-aio \
+    --enable-lzo \
+    --disable-opengl \
+    --enable-pie \
+    --disable-qom-cast-debug \
+    --disable-sdl \
+    --enable-snappy \
+    --disable-sparse \
+    --disable-tpm \
+    --enable-trace-backend=dtrace \
+    --enable-uuid \
+    --disable-vde \
+    --disable-vhdx \
+    --disable-vhost-scsi \
+    --disable-virtfs \
+    --disable-vnc-jpeg \
+    --disable-vte \
+    --enable-vnc-png \
+    --disable-vnc-sasl \
+    --enable-werror \
+    --disable-xen \
+    --disable-xfsctl \
+    --disable-gnutls \
+    --disable-gcrypt \
+    --disable-nettle \
+    --enable-fdt \
+    --disable-glusterfs \
+    --disable-guest-agent \
+    --enable-numa \
+    --disable-rbd \
+    --enable-rdma \
+    --enable-seccomp \
+    --disable-spice \
+    --disable-smartcard \
+    --enable-usb-redir \
+    --disable-tcmalloc \
+    --audio-drv-list= \
+    --block-drv-rw-whitelist=qcow2,raw,file,host_device,iscsi \
+    --block-drv-ro-whitelist= \
     --audio-drv-list= \
     --enable-kvm \
-    --disable-xen \
-    --enable-numa \
-    --enable-seccomp \
-%if 0%{?have_spice:1}
-    --enable-spice \
-%endif
-%if %{without rbd}
-    --disable-rbd \
-%endif
-    --disable-curl \
-    --block-drv-rw-whitelist=raw,file,host_device,iscsi \
-    --block-drv-ro-whitelist= \
-    "$@"
+    --disable-xen
 
 echo "config-host.mak contents:"
 echo "==="
@@ -1198,7 +1191,6 @@ getent passwd qemu >/dev/null || \
 /etc/qemu
 /usr/bin/ivshmem-client
 /usr/bin/ivshmem-server
-/usr/share/man/man8/qemu-ga.8.gz
 %dir %{qemudocdir}
 %doc %{qemudocdir}/Changelog
 %doc %{qemudocdir}/README
@@ -1212,8 +1204,6 @@ getent passwd qemu >/dev/null || \
 %{_datadir}/%{name}/trace-events-all
 %{_datadir}/%{name}/keymaps/
 %{_mandir}/man1/qemu.1*
-%{_mandir}/man1/virtfs-proxy-helper.1*
-%{_bindir}/virtfs-proxy-helper
 %if %{without separate_kvm}
 %attr(4755, root, root) %{_libexecdir}/qemu-bridge-helper
 %endif
@@ -1238,7 +1228,6 @@ getent passwd qemu >/dev/null || \
 %files guest-agent
 %defattr(-,root,root,-)
 %doc COPYING README
-%{_bindir}/qemu-ga
 %{_unitdir}/qemu-guest-agent.service
 %{_udevdir}/99-qemu-guest-agent.rules
 %endif
