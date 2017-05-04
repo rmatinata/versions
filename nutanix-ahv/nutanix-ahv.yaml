@@ -1,0 +1,9 @@
+Package:
+ files:
+  CentOS:
+   '7':
+    install_dependencies:
+     - libvirt-python
+     - nc
+     - open-power-host-os
+     - openvswitch
