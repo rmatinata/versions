@@ -54,7 +54,7 @@ Requires(post): docker-swarm = 1.1.0-1.gita0fd82b
 Requires(post): flannel = 0.5.5-1.gitcb8284f%{dist}
 Requires(post): kubernetes = 1.2.0-0.21.git4a3f9c5%{dist}
 Requires: %{name}-virt = %{version}-%{release}
-Requires(post): SLOF = 20170303-2.git1903174%{dist}
+Requires(post): SLOF = 20170303-2%{dist}%{?buildid}
 Requires(post): libvirt = 2.2.0-7%{dist}%{?buildid}
 Requires(post): qemu = 15:2.8.0-8%{dist}%{?buildid}
 Requires: %{name}-virt-management = %{version}-%{release}
@@ -121,7 +121,7 @@ Summary: OpenPOWER Host OS hypervisor packages
 Requires: %{name}-base = %{version}-%{release}
 Requires(post): kernel = 4.10.0-7%{dist}%{?buildid}
 
-Requires(post): SLOF = 20170303-2.git1903174%{dist}
+Requires(post): SLOF = 20170303-2%{dist}%{?buildid}
 Requires(post): libvirt = 2.2.0-7%{dist}%{?buildid}
 Requires(post): qemu = 15:2.8.0-8%{dist}%{?buildid}
 
@@ -136,7 +136,7 @@ Summary: OpenPOWER Host OS hypervisor management packages
 Requires: %{name}-base = %{version}-%{release}
 Requires(post): kernel = 4.10.0-7%{dist}%{?buildid}
 Requires: %{name}-virt = %{version}-%{release}
-Requires(post): SLOF = 20170303-2.git1903174%{dist}
+Requires(post): SLOF = 20170303-2%{dist}%{?buildid}
 Requires(post): libvirt = 2.2.0-7%{dist}%{?buildid}
 Requires(post): qemu = 15:2.8.0-8%{dist}%{?buildid}
 

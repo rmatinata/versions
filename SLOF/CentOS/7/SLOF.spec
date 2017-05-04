@@ -4,7 +4,7 @@
 
 Name:           SLOF
 Version:        20170303
-Release:        2%{gitcommittag}%{?dist}
+Release:        2%{?dist}%{?buildid}
 Summary:        Slimline Open Firmware
 
 License:        BSD
