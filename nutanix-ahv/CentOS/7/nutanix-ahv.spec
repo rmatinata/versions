@@ -22,6 +22,7 @@ Requires: open-power-host-os-ras     = 2.0-9%{dist}%{?buildid}
 # Extra packages required by Nutanix AHV.
 Requires(post): libvirt-python = 2.2.0-1%{dist}
 Requires(post): openvswitch = 2.5.2-2%{dist}%{?buildid}
+Requires(post): nutanix-frodo = 1.0-1%{dist}%{?buildid}
 Requires: rsync
 Requires: psmisc
 

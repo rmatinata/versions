@@ -1,0 +1,6 @@
+Package:
+ sources:
+  - git:
+     src: 'git://titan.corp.nutanix.com/git/frodo'
+     branch: 'master'
+     commit_id: '7acf4c1619adccc13595f10367c7232f96e09f95'
