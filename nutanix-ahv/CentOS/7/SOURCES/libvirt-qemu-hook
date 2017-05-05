@@ -1,0 +1,233 @@
+#!/usr/bin/python
+#
+# Copyright 2017 Nutanix, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+import errno
+import fcntl
+import glob
+import os
+import re
+import sys
+import time
+import uuid
+import xml.etree.cElementTree as ElementTree
+
+DEBUG_TRACE = 1
+trace_file = "/var/log/libvirt/qemu/hook.log"
+hugepages_lock_file = "/var/run/libvirt/qemu/hugepages.lock"
+cvm_cpu_shares = 512
+uvms_cpu_shares = 1024
+reserved_free_memory_kb = 1024 * 1024
+
+def log(level, msg):
+  with open(trace_file, "a") as logfile:
+    logfile.write("%0.3f: %s: %s\n" % (time.time(), level, msg))
+
+def dbg(msg):
+  if DEBUG_TRACE:
+    log("DBG", msg)
+
+def err(msg):
+  log("ERR", msg)
+
+def set_cgroup_cpu_shares(path, shares):
+  for cgroup in ("/cgroup", "/sys/fs/cgroup"):
+    cpu = os.path.join(cgroup, "cpu")
+    if os.path.isdir(cpu):
+      path = os.path.join(cpu, path, "cpu.shares")
+      try:
+        os.mkdir(os.path.dirname(path))
+      except OSError as ex:
+        if ex.errno != errno.EEXIST:
+          raise
+      with open(path, "r+") as fobj:
+        fobj.write("%d\n" % shares)
+      break
+
+def cgclassify(group, path, pids):
+  argv = [ "cgclassify", "-g", "%s:%s" % (group, path) ]
+  argv.extend(pids)
+  dbg(" ".join(argv))
+  os.spawnvp(os.P_WAIT, argv[0], argv)
+
+def is_cvm(domain):
+  # If the domain name can be parsed as UUID, then it's an acropolis VM,
+  # a.k.a., a UVM.
+  # Otherwise, it's a VM defined in libvirt only, we assume that it's CVM.
+  try:
+    uuid.UUID(domain)
+    return False
+  except ValueError:
+    return True
+
+def log_mem_stats(MemAvailable, MemFree, CmaFree,
+                  HugePages_Total, HugePages_Free,
+                  **kwargs):
+  with open("/proc/sys/vm/nr_hugepages", "r+") as fobj:
+    nr_hugepages = fobj.read()
+
+  dbg("Memory stats: "
+      "HugePages_Total %d HugePages_Free %d MemAvailable %d MB "
+      "Memfree %d MB CmaFree %d MB nr_hugepages %d " %
+       (HugePages_Total, HugePages_Free, MemAvailable/1024,
+       MemFree/1024, CmaFree / 1024, int(nr_hugepages)))
+
+  if (HugePages_Total < int(nr_hugepages)):
+    dbg("Unable to reclaim target huge pages. Fragmentation suspected")
+
+def parse_meminfo():
+  meminfo_re = re.compile(r"(\w+):\s+(\d+)(?: kB)?")
+  with open("/proc/meminfo") as meminfo:
+    return dict((k, int(v)) for k,v in meminfo_re.findall(meminfo.read()))
+
+def fix_hugepage_allocation():
+  def fix(MemAvailable, CommitLimit, Committed_AS, CmaFree,
+          HugePages_Total, HugePages_Free, Hugepagesize,
+          **kwargs):
+    # All parameters are in units of KB, unless it's a count of pages.
+
+    # As long as we use strict overcommit, we have to take into account
+    # CommitLimit and Committed_AS for free memory cauculation.
+    free_memory_kb = min(MemAvailable, CommitLimit - Committed_AS)
+
+    # Take out our constant free memory reservation from free memory,
+    # and special memory reserved for kernel purposes such as CMA.
+    free_memory_kb -= CmaFree + reserved_free_memory_kb
+
+    # Adjust hugepage allocation by the amount free memory we have.
+    hugepages_total_kb = HugePages_Total * Hugepagesize + free_memory_kb
+    hugepages_free_kb  = HugePages_Free  * Hugepagesize + free_memory_kb
+
+    # Assuming all free memory can be used for VM memory, we need to
+    # reserve extra regular pages for KVM RMAP at ratio of 8 bytes per page.
+    page_size = os.sysconf("SC_PAGE_SIZE")
+    hugepages_total_kb -= hugepages_free_kb / (page_size / 8)
+
+    # Do the adjustment.
+    new_hugepages_total = hugepages_total_kb / Hugepagesize
+    if HugePages_Total != new_hugepages_total:
+      dbg("Adjusting HugePages_Total: %d -> %d" %
+          (HugePages_Total, new_hugepages_total))
+      with open("/proc/sys/vm/nr_hugepages", "r+") as fobj:
+        fobj.write("%d\n" % new_hugepages_total)
+  #echo 1 >/proc/sys/vm/drop_caches
+  with open("/proc/sys/vm/drop_caches", "w") as f:
+    f.write("%s" % 1)
+    f.close()
+  #echo 1 >/proc/sys/vm/compact_memory
+  with open("/proc/sys/vm/compact_memory", "w") as f:
+    f.write("%s" % 1)
+    f.close()
+
+  with open(hugepages_lock_file, "w") as lockfile:
+    fcntl.lockf(lockfile.fileno(), fcntl.LOCK_EX)
+    fix(**parse_meminfo())
+
+def prepare_hook(domain, subaction, root):
+  with open(hugepages_lock_file, "w") as lockfile:
+    fcntl.lockf(lockfile.fileno(), fcntl.LOCK_EX)
+    log_mem_stats(**parse_meminfo())
+
+def started_hook(domain, subaction, root):
+  """
+  Move all the QEMU domain tasks from libvirt's default one "cpu" cgroup
+  to "2 cgroups" model which has a one cgroup for CVM another for all UVMs
+  This is more performant while allowing cpu reservation for CVM.
+
+  Args:
+    domain : QEMU domain name
+    subaction: ignored
+    root: root of the XML DOM tree of the VM configuration
+  """
+  if is_cvm(domain):
+    path = "cvm"
+    shares = cvm_cpu_shares
+  else:
+    path = "uvms"
+    shares = uvms_cpu_shares
+
+  set_cgroup_cpu_shares(path, shares)
+
+  tasks = []
+  taskfiles = (
+    # Patterns for slice names:
+    # Libvirt 1.2: <domain>.libvirt-qemu
+    glob.glob("/cgroup/cpu/machine/%s.libvirt-qemu/*/tasks" % domain) or
+    # Libvirt 2.0: qemu-<domid>-<domain>.libvirt-qemu
+    glob.glob("/cgroup/cpu/machine/qemu-*-%s.libvirt-qemu/*/tasks" % domain) or
+    # Libvirt 2.2 with systemd:
+    #  machine-qemu\x2d<domid>\x2d<escaped_domain>.scope
+    # ('\x2d' is the escape sequence for '-')
+    glob.glob("/sys/fs/cgroup/cpu/machine.slice/"
+              r"machine-qemu\x2d*\x2d%s.scope/*/tasks" %
+              domain.replace('-', r'\x2d'))
+  )
+  for taskfile in taskfiles:
+    with open(taskfile) as fobj:
+      tasks.extend(fobj.read().split())
+
+  cgclassify("cpu", path, tasks)
+
+  hugepages = root.find("./memoryBacking/hugepages")
+  if hugepages is not None:
+    fix_hugepage_allocation()
+
+  return 0
+
+def release_hook(domain, subaction, root):
+  hugepages = root.find("./memoryBacking/hugepages")
+  if hugepages is not None:
+    pid = os.fork()
+    # run the hugepage computation in a child process since this can block
+    if pid == 0:
+      # close unneeded FDs.
+      list_string = "Closing Fds after fork from _release_ hook :"
+      for fd in map(int, os.listdir("/proc/self/fd")):
+        try:
+          os.close(fd)
+          list_string += (" %s" % fd)
+        except OSError as ex:
+          err("Exception while trying to close fd! {0}: {1}".format(type(ex).__name__ ,ex.args))
+
+      dbg(list_string)
+      try:
+        fix_hugepage_allocation()
+      finally:
+        os._exit(1)
+  return 0
+
+HOOK_FUNCTIONS = {
+  "prepare" : prepare_hook,
+  "started": started_hook,
+  "release": release_hook,
+}
+
+def main(argv):
+  domain = argv[1]
+  action = argv[2]
+  subaction = argv[3]
+  xml = sys.stdin.read()
+
+  dbg("Domain %s, action %s, subaction %s" % (domain, action, subaction))
+  hook = HOOK_FUNCTIONS.get(action)
+  if hook:
+    return hook(domain, subaction, ElementTree.fromstring(xml))
+  else:
+    dbg("Action %s ignored" % action)
+    return 0
+
+if __name__ == "__main__":
+  sys.exit(main(sys.argv))
