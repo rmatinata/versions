@@ -23,8 +23,14 @@ Requires: open-power-host-os-ras     = 2.0-9%{dist}%{?buildid}
 Requires(post): libvirt-python = 2.2.0-1%{dist}
 Requires(post): openvswitch = 2.5.2-2%{dist}%{?buildid}
 Requires(post): nutanix-frodo = 1.0-1%{dist}%{?buildid}
+
+# Required by AHV management stack.
+Requires: net-tools
 Requires: rsync
-Requires: psmisc
+
+# Nice to haves.
+Requires(post): nano
+Requires(post): psmisc
 
 %description release
 %{summary}
