@@ -74,16 +74,16 @@ def is_cvm(domain):
     return True
 
 def log_mem_stats(MemAvailable, MemFree, CmaFree,
-                  HugePages_Total, HugePages_Free,
+                  HugePages_Total, HugePages_Free, HugePages_Rsvd,
                   **kwargs):
   with open("/proc/sys/vm/nr_hugepages", "r+") as fobj:
-    nr_hugepages = fobj.read()
+    nr_hugepages = fobj.read().strip()
 
   dbg("Memory stats: "
-      "HugePages_Total %d HugePages_Free %d MemAvailable %d MB "
-      "Memfree %d MB CmaFree %d MB nr_hugepages %d " %
-       (HugePages_Total, HugePages_Free, MemAvailable/1024,
-       MemFree/1024, CmaFree / 1024, int(nr_hugepages)))
+      "HugePages_Total: %d, HugePages_Free: %d, HugePages_Rsvd: %d, "
+      "MemAvailable: %d MB, Memfree: %d MB, CmaFree: %d MB, nr_hugepages: %s" %
+       (HugePages_Total, HugePages_Free, HugePages_Rsvd,
+        MemAvailable/1024, MemFree/1024, CmaFree/1024, nr_hugepages))
 
   if (HugePages_Total < int(nr_hugepages)):
     dbg("Unable to reclaim target huge pages. Fragmentation suspected")
@@ -95,7 +95,7 @@ def parse_meminfo():
 
 def fix_hugepage_allocation():
   def fix(MemAvailable, CommitLimit, Committed_AS, CmaFree,
-          HugePages_Total, HugePages_Free, Hugepagesize,
+          HugePages_Total, HugePages_Free, HugePages_Rsvd, Hugepagesize,
           **kwargs):
     # All parameters are in units of KB, unless it's a count of pages.
 
@@ -104,8 +104,16 @@ def fix_hugepage_allocation():
     free_memory_kb = min(MemAvailable, CommitLimit - Committed_AS)
 
     # Take out our constant free memory reservation from free memory,
-    # and special memory reserved for kernel purposes such as CMA.
+    # and special memory reserved for special purposes such as CMA.
     free_memory_kb -= CmaFree + reserved_free_memory_kb
+
+    # On PowerPC, hashed page tables (HPT) are allocated from CMA.
+    # The KVM module will vmalloc() an additional 'struct revmap_entry'
+    # for each HPTE allocated from CMA. Assuming that all free CMA memory will
+    # eventually be allocated HPTEs, reserve additional memory for the
+    # corresponding revmap entries.
+    if "ppc64le" in os.uname():
+      free_memory_kb -= CmaFree
 
     # Adjust hugepage allocation by the amount free memory we have.
     hugepages_total_kb = HugePages_Total * Hugepagesize + free_memory_kb
@@ -117,8 +125,12 @@ def fix_hugepage_allocation():
     hugepages_total_kb -= hugepages_free_kb / (page_size / 8)
 
     # Do the adjustment.
+    # Do not increase nr_hugepages when another VM is currently allocating
+    # memory (when there are reserved hugepages which have not been faulted in
+    # yet). Otherwise we might blow away that VM's RMAP reservation.
     new_hugepages_total = hugepages_total_kb / Hugepagesize
-    if HugePages_Total != new_hugepages_total:
+    if (new_hugepages_total < HugePages_Total or
+        new_hugepages_total > HugePages_Total and HugePages_Rsvd == 0):
       dbg("Adjusting HugePages_Total: %d -> %d" %
           (HugePages_Total, new_hugepages_total))
       with open("/proc/sys/vm/nr_hugepages", "r+") as fobj:
@@ -134,7 +146,10 @@ def fix_hugepage_allocation():
 
   with open(hugepages_lock_file, "w") as lockfile:
     fcntl.lockf(lockfile.fileno(), fcntl.LOCK_EX)
-    fix(**parse_meminfo())
+    meminfo = parse_meminfo()
+    log_mem_stats(**meminfo)
+    fix(**meminfo)
+    log_mem_stats(**parse_meminfo())
 
 def prepare_hook(domain, subaction, root):
   with open(hugepages_lock_file, "w") as lockfile:
