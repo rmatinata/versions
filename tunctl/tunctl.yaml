@@ -1,0 +1,11 @@
+Package:
+ sources:
+  - git:
+     src: 'git://titan.corp.nutanix.com/git/kvm-tunctl'
+     branch: 'tunctl-1.5-nutanix'
+     commit_id: 'da8c0f43db868a1a8cbd025db26309bce8d67509'
+ files:
+  CentOS:
+   '7':
+    build_dependencies:
+     - 'kernel'
