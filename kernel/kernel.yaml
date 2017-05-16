@@ -3,7 +3,7 @@ Package:
   - git:
      src: 'https://github.com/NXPower/linux.git'
      branch: 'hostos-2.0-nutanix'
-     commit_id: 'eb5ed3cf09875785861cdfdc99783daa43d22163'
+     commit_id: 'cfb4baeca550ce376a6c09348d67448a47e46b98'
  version:
   file: 'Makefile'
   regex: 'VERSION.*([\d.]+)\nPATCHLEVEL\s*=\s*(?P<patch>[\d.]*)\nSUBLEVEL\s*=\s*(?(patch)([\d.]*))\nEXTRAVERSION\s*=\s*([-\w.]*)\n'

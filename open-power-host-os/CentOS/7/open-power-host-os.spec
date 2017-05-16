@@ -47,7 +47,7 @@ BuildRequires: policycoreutils-python
 Summary: OpenPOWER Host OS full package set
 
 Requires: %{name}-base = %{version}-%{release}
-Requires(post): kernel = 4.10.15-1%{dist}%{?buildid}
+Requires(post): kernel = 4.10.16-1%{dist}%{?buildid}
 Requires: %{name}-container = %{version}-%{release}
 Requires(post): docker = 2:1.12.2-47%{dist}
 Requires(post): docker-swarm = 1.1.0-1.gita0fd82b
@@ -92,7 +92,7 @@ Summary: OpenPOWER Host OS basic packages
 
 Requires: %{name}-release = %{version}-%{release}
 
-Requires(post): kernel = 4.10.15-1%{dist}%{?buildid}
+Requires(post): kernel = 4.10.16-1%{dist}%{?buildid}
 
 %description base
 %{summary}
@@ -119,7 +119,7 @@ Requires(post): kubernetes = 1.2.0-0.21.git4a3f9c5%{dist}
 Summary: OpenPOWER Host OS hypervisor packages
 
 Requires: %{name}-base = %{version}-%{release}
-Requires(post): kernel = 4.10.15-1%{dist}%{?buildid}
+Requires(post): kernel = 4.10.16-1%{dist}%{?buildid}
 
 Requires(post): SLOF = 20170303-2%{dist}%{?buildid}
 Requires(post): libvirt = 2.2.0-7%{dist}%{?buildid}
@@ -134,7 +134,7 @@ Requires(post): qemu = 15:2.8.0-8%{dist}%{?buildid}
 Summary: OpenPOWER Host OS hypervisor management packages
 
 Requires: %{name}-base = %{version}-%{release}
-Requires(post): kernel = 4.10.15-1%{dist}%{?buildid}
+Requires(post): kernel = 4.10.16-1%{dist}%{?buildid}
 Requires: %{name}-virt = %{version}-%{release}
 Requires(post): SLOF = 20170303-2%{dist}%{?buildid}
 Requires(post): libvirt = 2.2.0-7%{dist}%{?buildid}
@@ -155,7 +155,7 @@ Requires(post): wok = 2.3.0-15.git7f5e0ae%{dist}
 Summary: OpenPOWER Host OS RAS (Reliability Availability Serviceability) packages
 
 Requires: %{name}-base = %{version}-%{release}
-Requires(post): kernel = 4.10.15-1%{dist}%{?buildid}
+Requires(post): kernel = 4.10.16-1%{dist}%{?buildid}
 
 Requires(post): crash = 7.1.6-1.git64531dc%{dist}
 Requires(post): hwdata = 0.288-1.git625a119%{dist}
