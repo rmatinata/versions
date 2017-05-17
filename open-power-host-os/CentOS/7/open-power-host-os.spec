@@ -56,7 +56,7 @@ Requires(post): kubernetes = 1.2.0-0.21.git4a3f9c5%{dist}
 Requires: %{name}-virt = %{version}-%{release}
 Requires(post): SLOF = 20170303-2%{dist}%{?buildid}
 Requires(post): libvirt = 2.0.0-10%{dist}.5%{?buildid}
-Requires(post): qemu = 15:2.8.0-8%{dist}%{?buildid}
+Requires(post): qemu-kvm = 10:2.6.0-28%{dist}.9%{?buildid}
 Requires: %{name}-virt-management = %{version}-%{release}
 Requires(post): novnc = 0.5.1-5.gitfc00821%{dist}
 Requires(post): ginger = 2.3.0-17.gite9b8a1b%{dist}
@@ -123,7 +123,7 @@ Requires(post): kernel = 4.10.16-1%{dist}%{?buildid}
 
 Requires(post): SLOF = 20170303-2%{dist}%{?buildid}
 Requires(post): libvirt = 2.0.0-10%{dist}.5%{?buildid}
-Requires(post): qemu = 15:2.8.0-8%{dist}%{?buildid}
+Requires(post): qemu-kvm = 10:2.6.0-28%{dist}.9%{?buildid}
 
 %description virt
 %{summary}
@@ -138,7 +138,7 @@ Requires(post): kernel = 4.10.16-1%{dist}%{?buildid}
 Requires: %{name}-virt = %{version}-%{release}
 Requires(post): SLOF = 20170303-2%{dist}%{?buildid}
 Requires(post): libvirt = 2.0.0-10%{dist}.5%{?buildid}
-Requires(post): qemu = 15:2.8.0-8%{dist}%{?buildid}
+Requires(post): qemu-kvm = 10:2.6.0-28%{dist}.9%{?buildid}
 
 Requires(post): novnc = 0.5.1-5.gitfc00821%{dist}
 Requires(post): ginger = 2.3.0-17.gite9b8a1b%{dist}

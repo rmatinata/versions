@@ -2,7 +2,6 @@
 Description=Kernel Samepage Merging (KSM) Tuning Daemon
 After=ksm.service
 Requires=ksm.service
-ConditionVirtualization=no
 
 [Service]
 ExecStart=/usr/sbin/ksmtuned
