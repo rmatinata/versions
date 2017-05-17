@@ -43,6 +43,7 @@ Requires: ipmitool
 # Nice to haves.
 Requires(post): nano
 Requires(post): psmisc
+Requires(post): wget
 
 # Actually required for running %post
 Requires(post): systemd-units
