@@ -38,6 +38,7 @@ Requires: tunctl >= 1.5-3%{dist}%{?buildid}
 # Required by AHV management stack.
 Requires: net-tools
 Requires: rsync
+Requires: ipmitool
 
 # Nice to haves.
 Requires(post): nano
