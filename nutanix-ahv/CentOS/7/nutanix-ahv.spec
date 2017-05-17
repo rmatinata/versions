@@ -30,15 +30,15 @@ Requires: open-power-host-os-virt    = 2.0-9%{dist}%{?buildid}
 Requires: open-power-host-os-ras     = 2.0-9%{dist}%{?buildid}
 
 # Extra packages required by Nutanix AHV.
-Requires: libvirt-python >= 2.2.0-1%{dist}
 Requires: openvswitch >= 2.5.2-2%{dist}%{?buildid}
 Requires: nutanix-frodo >= 1.0-1%{dist}%{?buildid}
 Requires: tunctl >= 1.5-3%{dist}%{?buildid}
 
 # Required by AHV management stack.
+Requires: ipmitool
+Requires: libvirt-python
 Requires: net-tools
 Requires: rsync
-Requires: ipmitool
 
 # Nice to haves.
 Requires(post): nano

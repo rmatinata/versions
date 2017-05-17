@@ -3,7 +3,6 @@ Package:
   CentOS:
    '7':
     install_dependencies:
-     - libvirt-python
      - nc
      - nutanix-frodo
      - open-power-host-os
