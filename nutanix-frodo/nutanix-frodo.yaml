@@ -3,4 +3,4 @@ Package:
   - git:
      src: 'git://titan.corp.nutanix.com/git/frodo'
      branch: 'master'
-     commit_id: 'bded934dbebae81aefc83ad104e3e145999690ec'
+     commit_id: '338c0530219b6e599818c49d9f5b6407e2baa5ff'
