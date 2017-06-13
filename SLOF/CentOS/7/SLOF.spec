@@ -45,16 +45,16 @@ make qemu %{?_smp_mflags} V=2
 
 
 %install
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/qemu
-cp -a boot_rom.bin $RPM_BUILD_ROOT%{_datadir}/qemu/slof.bin
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/qemu-kvm
+cp -a boot_rom.bin $RPM_BUILD_ROOT%{_datadir}/qemu-kvm/slof.bin
 
 
 %files
 %doc FlashingSLOF.pdf
 %doc LICENSE
 %doc README
-%dir %{_datadir}/qemu
-%{_datadir}/qemu/slof.bin
+%dir %{_datadir}/qemu-kvm
+%{_datadir}/qemu-kvm/slof.bin
 
 
 %changelog
