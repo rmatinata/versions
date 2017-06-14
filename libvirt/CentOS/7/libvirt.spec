@@ -1125,12 +1125,6 @@ install -d -m 0755 $RPM_BUILD_ROOT%{_datadir}/lib/libvirt/dnsmasq/
 # because if the admin wants to delete the default network completely, we don't
 # want to end up re-incarnating it on every RPM upgrade.
 install -d -m 0755 $RPM_BUILD_ROOT%{_datadir}/libvirt/networks/
-cp $RPM_BUILD_ROOT%{_sysconfdir}/libvirt/qemu/networks/default.xml \
-   $RPM_BUILD_ROOT%{_datadir}/libvirt/networks/default.xml
-rm -f $RPM_BUILD_ROOT%{_sysconfdir}/libvirt/qemu/networks/default.xml
-rm -f $RPM_BUILD_ROOT%{_sysconfdir}/libvirt/qemu/networks/autostart/default.xml
-# Strip auto-generated UUID - we need it generated per-install
-sed -i -e "/<uuid>/d" $RPM_BUILD_ROOT%{_datadir}/libvirt/networks/default.xml
 %if ! %{with_qemu}
 rm -f $RPM_BUILD_ROOT%{_datadir}/augeas/lenses/libvirtd_qemu.aug
 rm -f $RPM_BUILD_ROOT%{_datadir}/augeas/lenses/tests/test_libvirtd_qemu.aug
@@ -1181,6 +1175,8 @@ rm -f $RPM_BUILD_ROOT%{_libexecdir}/libvirt-guests.sh
 %if %{with_systemd}
 rm -f $RPM_BUILD_ROOT%{_unitdir}/libvirt-guests.service
 %endif
+rm -f $RPM_BUILD_ROOT%{_sysconfdir}/libvirt/qemu/networks/autostart/default.xml
+rm -f $RPM_BUILD_ROOT%{_sysconfdir}/libvirt/qemu/networks/default.xml
 
 %clean
 rm -fr %{buildroot}
@@ -1316,52 +1312,6 @@ if [ $1 -ge 1 ] ; then
         /sbin/service libvirtd status 1>/dev/null 2>&1 &&
             /sbin/service virtlogd start || :
 %endif
-fi
-
-%post daemon-config-network
-if test $1 -eq 1 && test ! -f %{_sysconfdir}/libvirt/qemu/networks/default.xml ; then
-    # see if the network used by default network creates a conflict,
-    # and try to resolve it
-    # NB: 192.168.122.0/24 is used in the default.xml template file;
-    # do not modify any of those values here without also modifying
-    # them in the template.
-    orig_sub=122
-    sub=${orig_sub}
-    nl='
-'
-    routes="${nl}$(ip route show | cut -d' ' -f1)${nl}"
-    case ${routes} in
-      *"${nl}192.168.${orig_sub}.0/24${nl}"*)
-        # there was a match, so we need to look for an unused subnet
-        for new_sub in $(seq 124 254); do
-          case ${routes} in
-          *"${nl}192.168.${new_sub}.0/24${nl}"*)
-            ;;
-          *)
-            sub=$new_sub
-            break;
-            ;;
-          esac
-        done
-        ;;
-      *)
-        ;;
-    esac
-
-    UUID=`/usr/bin/uuidgen`
-    sed -e "s/${orig_sub}/${sub}/g" \
-        -e "s,</name>,</name>\n  <uuid>$UUID</uuid>," \
-         < %{_datadir}/libvirt/networks/default.xml \
-         > %{_sysconfdir}/libvirt/qemu/networks/default.xml
-    ln -s ../default.xml %{_sysconfdir}/libvirt/qemu/networks/autostart/default.xml
-
-    # Make sure libvirt picks up the new network defininiton
-%if %{with_systemd}
-    /bin/systemctl try-restart libvirtd.service >/dev/null 2>&1 ||:
-%else
-    /sbin/service libvirtd condrestart > /dev/null 2>&1 || :
-%endif
-
 fi
 
 %if %{with_systemd}
@@ -1506,7 +1456,6 @@ exit 0
 
 %files daemon-config-network
 %dir %{_datadir}/libvirt/networks/
-%{_datadir}/libvirt/networks/default.xml
 
 %files daemon-config-nwfilter
 %{_sysconfdir}/libvirt/nwfilter/*.xml
