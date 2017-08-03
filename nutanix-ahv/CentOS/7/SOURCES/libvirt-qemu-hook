@@ -28,13 +28,13 @@ import xml.etree.cElementTree as ElementTree
 DEBUG_TRACE = 1
 trace_file = "/var/log/libvirt/qemu/hook.log"
 hugepages_lock_file = "/var/run/libvirt/qemu/hugepages.lock"
-cvm_cpu_shares = 512
+cvm_cpu_shares = 4096
 uvms_cpu_shares = 1024
 reserved_free_memory_kb = 1024 * 1024
 
 def log(level, msg):
   with open(trace_file, "a") as logfile:
-    logfile.write("%0.3f: %s: %s\n" % (time.time(), level, msg))
+    logfile.write("%s %s: %s\n" % (time.strftime("%F %T%z"), level, msg))
 
 def dbg(msg):
   if DEBUG_TRACE:
@@ -98,6 +98,13 @@ def fix_hugepage_allocation():
           HugePages_Total, HugePages_Free, HugePages_Rsvd, Hugepagesize,
           **kwargs):
     # All parameters are in units of KB, unless it's a count of pages.
+    page_size = os.sysconf("SC_PAGE_SIZE")
+
+    # If vGPU is present then each host page could have 64 bytes of tracking
+    # structures for each host page being used by a VM. Account for this
+    # overhead by to the committed_AS as a ratio of 64 bytes per page.
+    if os.path.isdir("/sys/bus/pci/drivers/nvidia"):
+      Committed_AS += ( HugePages_Total * Hugepagesize ) / ( page_size / 64 )
 
     # As long as we use strict overcommit, we have to take into account
     # CommitLimit and Committed_AS for free memory cauculation.
@@ -121,7 +128,6 @@ def fix_hugepage_allocation():
 
     # Assuming all free memory can be used for VM memory, we need to
     # reserve extra regular pages for KVM RMAP at ratio of 8 bytes per page.
-    page_size = os.sysconf("SC_PAGE_SIZE")
     hugepages_total_kb -= hugepages_free_kb / (page_size / 8)
 
     # Do the adjustment.
@@ -152,9 +158,14 @@ def fix_hugepage_allocation():
     log_mem_stats(**parse_meminfo())
 
 def prepare_hook(domain, subaction, root):
+  vgpu_hook(domain, "prepare", root)
   with open(hugepages_lock_file, "w") as lockfile:
     fcntl.lockf(lockfile.fileno(), fcntl.LOCK_EX)
     log_mem_stats(**parse_meminfo())
+    fcntl.lockf(lockfile.fileno(), fcntl.LOCK_UN)
+    if is_cvm(domain):
+      fix_hugepage_allocation()
+
 
 def started_hook(domain, subaction, root):
   """
@@ -181,8 +192,11 @@ def started_hook(domain, subaction, root):
     # Patterns for slice names:
     # Libvirt 1.2: <domain>.libvirt-qemu
     glob.glob("/cgroup/cpu/machine/%s.libvirt-qemu/*/tasks" % domain) or
-    # Libvirt 2.0: qemu-<domid>-<domain>.libvirt-qemu
+    # Libvirt 2.0: qemu-<domid>-<domain>.libvirt-qemu without systemd
     glob.glob("/cgroup/cpu/machine/qemu-*-%s.libvirt-qemu/*/tasks" % domain) or
+    # Libvirt 2.0: qemu-<domid>-<domain>.libvirt-qemu with systemd
+    glob.glob("/sys/fs/cgroup/cpu/machine/qemu-*-%s.libvirt-qemu/*/tasks"
+              % domain) or
     # Libvirt 2.2 with systemd:
     #  machine-qemu\x2d<domid>\x2d<escaped_domain>.scope
     # ('\x2d' is the escape sequence for '-')
@@ -202,26 +216,87 @@ def started_hook(domain, subaction, root):
 
   return 0
 
+def vgpu_hook(domain, action, root):
+  hostdevices = root.findall("./devices/hostdev")
+  for hostdevice in hostdevices:
+    vgpu = hostdevice.find("./mdev")
+    if vgpu is not None:
+      source = hostdevice.find("./source/address")
+      pci_domain = source.attrib["domain"][2:]
+      bus = source.attrib["bus"][2:]
+      slot = source.attrib["slot"][2:]
+      function = source.attrib["function"][2:]
+      mdev_device_id = vgpu.attrib["device_id"]
+      mdev_uuid = vgpu.attrib["uuid"]
+      # Extra parameters are optional
+      extra_param = vgpu.attrib.get("extra_param")
+      mdev_uuid = vgpu.attrib["uuid"]
+      dbg("Found mdev %s" % vgpu)
+
+      sysfs_pci_path = "/sys/bus/pci/devices"
+      gpu_path = ( "%s/%s:%s:%s.%s/mdev_supported_types/nvidia-%s" %
+            (sysfs_pci_path, pci_domain, bus, slot, function, mdev_device_id) )
+      gpu_create_path = "%s/create" % gpu_path
+      gpu_param_path = ( "%s/devices/%s/nvidia/vgpu_params" % ( gpu_path,
+                                                               mdev_uuid ))
+      gpu_destroy_path = "%s/devices/%s/remove" % ( gpu_path, mdev_uuid )
+
+      if action == "prepare":
+        dbg("Writing %s to %s"  % (mdev_uuid, gpu_create_path))
+        try:
+          with open(gpu_create_path, "w") as fobj:
+            fobj.write("%s\n" % mdev_uuid)
+          if extra_param:
+            with open(gpu_param_path, "w") as fobj:
+              fobj.write("%s\n" % extra_param)
+        except IOError as e:
+          dbg("I/O error({0}): {1}".format(e.errno, e.strerror))
+
+      if action == "release":
+        dbg("Writing 1 to %s" % (gpu_destroy_path))
+        try:
+          with open(gpu_destroy_path, "w") as fobj:
+            # Nvidia driver can return EBUSY. Retry 10 times every .5 seconds
+            for i in range(10):
+              try:
+                fobj.write("1")
+                break
+              except IOError as e:
+                if e.errno == errno.EBUSY:
+                  time.sleep(0.5)
+                  continue
+                else:
+                  dbg("I/O error({0}): {1}".format(e.errno, e.strerror))
+                  break
+        except IOError as e:
+          dbg("I/O error({0}): {1}".format(e.errno, e.strerror))
+
 def release_hook(domain, subaction, root):
   hugepages = root.find("./memoryBacking/hugepages")
   if hugepages is not None:
+    # Run the hugepage computation in a child process since this can block.
     pid = os.fork()
-    # run the hugepage computation in a child process since this can block
     if pid == 0:
-      # close unneeded FDs.
-      list_string = "Closing Fds after fork from _release_ hook :"
+      # Close unneeded FDs.
+      list_string = "Closing FDs after fork from _release_ hook:"
       for fd in map(int, os.listdir("/proc/self/fd")):
         try:
           os.close(fd)
           list_string += (" %s" % fd)
         except OSError as ex:
-          err("Exception while trying to close fd! {0}: {1}".format(type(ex).__name__ ,ex.args))
-
+          if ex.errno != errno.EBADF:
+            # Log only non-EBADF errors. We will get at least one EBADF which
+            # is an fd for "/proc/self/fd" itself opened during os.listdir().
+            err("Exception while trying to close FD {0}! " + \
+                "{1}: {2}".format(fd, type(ex).__name__, ex.args))
       dbg(list_string)
+
       try:
         fix_hugepage_allocation()
       finally:
         os._exit(1)
+
+  vgpu_hook(domain, "release", root)
   return 0
 
 HOOK_FUNCTIONS = {
