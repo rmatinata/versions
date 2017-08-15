@@ -5,7 +5,7 @@
 
 Name: open-power-host-os
 Version: 2.0
-Release: 9%{dist}%{?buildid}
+Release: 10%{dist}%{?buildid}
 Summary: OpenPOWER Host OS metapackages
 Group: System Environment/Base
 License: GPLv3
@@ -57,12 +57,6 @@ Requires: %{name}-virt = %{version}-%{release}
 Requires(post): SLOF = 20170303-2%{dist}%{?buildid}
 Requires(post): libvirt = 2.0.0-11%{dist}.5%{?buildid}
 Requires(post): qemu-kvm = 10:2.6.0-28%{dist}.9%{?buildid}
-Requires: %{name}-virt-management = %{version}-%{release}
-Requires(post): novnc = 0.5.1-5.gitfc00821%{dist}
-Requires(post): ginger = 2.3.0-17.gite9b8a1b%{dist}
-Requires(post): ginger-base = 2.2.1-13.git109815c%{dist}
-Requires(post): kimchi = 2.3.0-17.git3830c25%{dist}
-Requires(post): wok = 2.3.0-15.git7f5e0ae%{dist}
 Requires: %{name}-ras = %{version}-%{release}
 Requires(post): crash = 7.1.6-1.git64531dc%{dist}
 Requires(post): hwdata = 0.288-1.git625a119%{dist}
@@ -127,28 +121,6 @@ Requires(post): qemu-kvm = 10:2.6.0-28%{dist}.9%{?buildid}
 
 %description virt
 %{summary}
-
-
-%package virt-management
-
-Summary: OpenPOWER Host OS hypervisor management packages
-
-Requires: %{name}-base = %{version}-%{release}
-Requires(post): kernel = 4.9.85-1%{dist}%{?buildid}
-Requires: %{name}-virt = %{version}-%{release}
-Requires(post): SLOF = 20170303-2%{dist}%{?buildid}
-Requires(post): libvirt = 2.0.0-11%{dist}.5%{?buildid}
-Requires(post): qemu-kvm = 10:2.6.0-28%{dist}.9%{?buildid}
-
-Requires(post): novnc = 0.5.1-5.gitfc00821%{dist}
-Requires(post): ginger = 2.3.0-17.gite9b8a1b%{dist}
-Requires(post): ginger-base = 2.2.1-13.git109815c%{dist}
-Requires(post): kimchi = 2.3.0-17.git3830c25%{dist}
-Requires(post): wok = 2.3.0-15.git7f5e0ae%{dist}
-
-%description virt-management
-%{summary}
-
 
 %package ras
 
@@ -219,7 +191,6 @@ rm -rf $RPM_BUILD_ROOT
 %files base
 %files container
 %files virt
-%files virt-management
 %files ras
 
 

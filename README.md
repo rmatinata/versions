@@ -165,7 +165,6 @@ The packages installed by each metapackage are as follows:
   - open-power-host-os-container
   - open-power-host-os-ras
   - open-power-host-os-virt
-  - open-power-host-os-virt-management
   - gcc
   - golang-github-russross-blackfriday
   - golang-github-shurcooL-sanitized_anchor_name
