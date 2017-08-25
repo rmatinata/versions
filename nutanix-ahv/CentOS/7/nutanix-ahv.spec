@@ -40,6 +40,9 @@ Requires: libvirt-python
 Requires: net-tools
 Requires: rsync
 
+# Required by Foundation
+Requires: ntp
+
 # Nice to haves.
 Requires(post): nano
 Requires(post): psmisc
