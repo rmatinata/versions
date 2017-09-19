@@ -3,7 +3,7 @@ Package:
   - git:
      src: 'https://github.com/NXPower/linux.git'
      branch: 'linux-4.9.y-nutanix'
-     commit_id: 'ac6277bc37f57c8c92cbb45212d1a080a6f69833'
+     commit_id: 'f2dd4ea50eb660f99e0bcf3fbb644c64276bed2a'
  version:
   file: 'Makefile'
   regex: 'VERSION.*([\d.]+)\nPATCHLEVEL\s*=\s*(?P<patch>[\d.]*)\nSUBLEVEL\s*=\s*(?(patch)([\d.]*))\nEXTRAVERSION\s*=\s*([-\w.]*)\n'
