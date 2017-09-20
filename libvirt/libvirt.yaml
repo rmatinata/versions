@@ -3,7 +3,7 @@ Package:
   - git:
      src: 'https://github.com/NXPower/libvirt.git'
      branch: 'libvirt-2.0.0-nutanix'
-     commit_id: '6ec2a0b246707a877ce67e83f85aad675687070b'
+     commit_id: '48f1d8ad896b0bd9685e56f390d9cb0f440c78dc'
  version:
   file: 'configure.ac'
   regex: 'AC_INIT\(\[[^]]+\],\s*\[([\d.]+)\]'
