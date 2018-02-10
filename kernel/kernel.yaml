@@ -1,9 +1,9 @@
 Package:
  sources:
   - git:
-     src: 'https://github.com/NXPower/linux.git'
+     src: '/home/malcolmc/linux'
      branch: 'linux-4.9.y-nutanix'
-     commit_id: 'f2dd4ea50eb660f99e0bcf3fbb644c64276bed2a'
+     commit_id: 'cb17c8a5124f5eef3f61ffbf1b49e873b951db28'
  version:
   file: 'Makefile'
   regex: 'VERSION.*([\d.]+)\nPATCHLEVEL\s*=\s*(?P<patch>[\d.]*)\nSUBLEVEL\s*=\s*(?(patch)([\d.]*))\nEXTRAVERSION\s*=\s*([-\w.]*)\n'
