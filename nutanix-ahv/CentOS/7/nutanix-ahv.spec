@@ -48,6 +48,7 @@ Requires: ntp
 Requires(post): nano
 Requires(post): psmisc
 Requires(post): wget
+Requires(post): opal-prd
 
 # Actually required for running %post
 Requires(post): systemd-units
