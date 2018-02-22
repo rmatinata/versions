@@ -3,3 +3,4 @@ enable libvirtd.service
 disable firewalld.service
 disable libvirt-guests.service
 enable opal-prd.service
+disable tuned.service

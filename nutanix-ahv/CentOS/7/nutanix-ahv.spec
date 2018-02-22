@@ -15,7 +15,7 @@ Summary: Nutanix AHV Release
 
 Source1001: libvirt-qemu-hook
 Source1002: sysctl.conf
-Source1003: 95-nutanix-ahv.preset
+Source1003: 15-nutanix-ahv.preset
 Source1004: modules_ipmi.conf
 
 BuildRequires: systemd-units
@@ -64,7 +64,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/libvirt/hooks
 install -m 0755 %{SOURCE1001} %{buildroot}%{_sysconfdir}/libvirt/hooks/qemu
 mkdir -p %{buildroot}%{_sysconfdir}/sysctl.d/
 cp %{SOURCE1002} %{buildroot}%{_sysconfdir}/sysctl.d/90-nutanix-ahv.conf
-install -D -p -m 644 %{SOURCE1003} %{buildroot}%{_presetdir}/95-nutanix-ahv.preset
+install -D -p -m 644 %{SOURCE1003} %{buildroot}%{_presetdir}/15-nutanix-ahv.preset
 mkdir -p %{buildroot}%{_sysconfdir}/modules-load.d/
 cp %{SOURCE1004} %{buildroot}%{_sysconfdir}/modules-load.d/ipmi.conf
 
@@ -72,7 +72,7 @@ cp %{SOURCE1004} %{buildroot}%{_sysconfdir}/modules-load.d/ipmi.conf
 %{_sysconfdir}/libvirt/hooks/qemu
 %{_sysconfdir}/sysctl.d/90-nutanix-ahv.conf
 %{_sysconfdir}/modules-load.d/ipmi.conf
-%{_presetdir}/95-nutanix-ahv.preset
+%{_presetdir}/15-nutanix-ahv.preset
 
 %post release
 grep -q -e '^stdio_handler' %{_sysconfdir}/libvirt/qemu.conf || \
