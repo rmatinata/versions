@@ -3,7 +3,7 @@ Package:
   - git:
      src: '/home/malcolmc/linux'
      branch: 'linux-4.9.y-nutanix'
-     commit_id: '31b3e66c86c7a8e75900aead4135dbb3895983c5'
+     commit_id: '64445a050c5f197e109707806957252e95592017'
  version:
   file: 'Makefile'
   regex: 'VERSION.*([\d.]+)\nPATCHLEVEL\s*=\s*(?P<patch>[\d.]*)\nSUBLEVEL\s*=\s*(?(patch)([\d.]*))\nEXTRAVERSION\s*=\s*([-\w.]*)\n'
