@@ -49,6 +49,7 @@ Requires(post): nano
 Requires(post): psmisc
 Requires(post): wget
 Requires(post): opal-prd
+Requires(post): kernel-tools
 
 # Actually required for running %post
 Requires(post): systemd-units
@@ -81,3 +82,5 @@ grep -q -e '^stdio_handler' %{_sysconfdir}/libvirt/qemu.conf || \
 %systemd_post openvswitch.service
 %systemd_post libvirtd.service
 %systemd_post libvirtd-guests.service
+%systemd_post opal-prd.service
+%systemd_post tuned.service
