@@ -1,7 +1,7 @@
 Package:
  sources:
   - git:
-     src: '/home/malcolmc/linux'
+     src: 'https://github.com/NXPower/linux.git'
      branch: 'linux-4.9.y-nutanix'
      commit_id: 'a60ebb83fdd9e187e5cd5265878b726dff485663'
  version:
