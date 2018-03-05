@@ -188,6 +188,9 @@ rm -rf $RPM_BUILD_ROOT
         /bin/systemctl daemon-reload >dev/null || :
     fi
 %endif
+# Mask the service to ensure old RPMS do not succeed in restarting the service 
+# on upgrade 
+/bin/systemctl mask %{name}.service || :
 
 
 %postun
@@ -197,6 +200,8 @@ rm -rf $RPM_BUILD_ROOT
     /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 %endif
 
+%posttrans
+/bin/systemctl unmask %{name}.service || :
 
 %files -n python-openvswitch
 %{python_sitelib}/ovs
