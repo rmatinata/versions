@@ -3,4 +3,4 @@ Package:
   - git:
      src: 'https://github.com/NXPower/qemu.git'
      branch: 'qemu-2.6.0-nutanix'
-     commit_id: '8188e66009e4977d4552a70669be3d5c1b2f2776'
+     commit_id: 'ffccbb8d32faf83895f89b0654ba6eda9d1e8674'
