@@ -85,3 +85,5 @@ grep -q -e '^stdio_handler' %{_sysconfdir}/libvirt/qemu.conf || \
 %systemd_post libvirtd-guests.service
 systemctl preset opal-prd.service >/dev/null 2>&1 || :
 systemctl preset tuned.service >/dev/null 2>&1 || :
+sed -i "s/.*UseDNS.*/UseDNS = no/" /etc/ssh/sshd_config
+sed -i "s/.*GSSAPIAuthentication.*/GSSAPIAuthentication = no/" /etc/ssh/sshd_config
