@@ -34,6 +34,9 @@ Requires: open-power-host-os-ras     = 2.0-9%{dist}%{?buildid}
 Requires: openvswitch >= 2.5.2-2%{dist}%{?buildid}
 Requires: nutanix-frodo >= 1.0-1%{dist}%{?buildid}
 Requires: tunctl >= 1.5-3%{dist}%{?buildid}
+Requires: kernel-tools = 4.9.85-1%{dist}%{?buildid}
+Requires: kernel-bootwrapper = 4.9.85-1%{dist}%{?buildid}
+Requires: opal-prd
 
 # Required by AHV management stack.
 Requires: ipmitool
@@ -48,12 +51,10 @@ Requires: ntp
 Requires(post): nano
 Requires(post): psmisc
 Requires(post): wget
-Requires(post): opal-prd
-Requires(post): kernel-tools = 4.9.85-1%{dist}%{?buildid}
-Requires(post): kernel-bootwrapper = 4.9.85-1%{dist}%{?buildid}
 
 # Actually required for running %post
 Requires(post): systemd-units
+Requires(post): openssh-server
 
 %description release
 %{summary}
@@ -85,5 +86,5 @@ grep -q -e '^stdio_handler' %{_sysconfdir}/libvirt/qemu.conf || \
 %systemd_post libvirtd-guests.service
 systemctl preset opal-prd.service >/dev/null 2>&1 || :
 systemctl preset tuned.service >/dev/null 2>&1 || :
-sed -i "s/.*UseDNS.*/UseDNS = no/" /etc/ssh/sshd_config
-sed -i "s/.*GSSAPIAuthentication.*/GSSAPIAuthentication = no/" /etc/ssh/sshd_config
+sed -i "s/.*UseDNS.*/UseDNS = no/" %{_sysconfdir}/ssh/sshd_config || :
+sed -i "s/.*GSSAPIAuthentication.*/GSSAPIAuthentication = no/" %{_sysconfdir}/ssh/sshd_config || :
