@@ -1,6 +1,6 @@
 Package:
  sources:
   - git:
-     src: 'git://titan.corp.nutanix.com/git/frodo'
+     src: 'ssh://gerrit.eng.nutanix.com:29418/frodo'
      branch: 'master'
      commit_id: '541a701f3159679833de61efcef4ac98a42deb0d'
