@@ -2,5 +2,5 @@ Package:
  sources:
   - git:
      src: 'ssh://gerrit.eng.nutanix.com:29418/frodo'
-     branch: 'master'
-     commit_id: '541a701f3159679833de61efcef4ac98a42deb0d'
+     branch: 'dev/ppc-barrier'
+     commit_id: '7dea115b16e0b59998c5eec94011af92a23ba22e'
