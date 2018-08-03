@@ -43,6 +43,7 @@ Requires: ipmitool
 Requires: libvirt-python
 Requires: net-tools
 Requires: rsync
+Requires: lldpd
 
 # Required by Foundation
 Requires: ntp
