@@ -25,10 +25,10 @@ BuildRequires: systemd-devel
 Requires: /usr/bin/cgclassify
 
 # Base OpenPower Host OS with virtualization support.
-Requires: open-power-host-os-release = 2.0-9%{dist}%{?buildid}
-Requires: open-power-host-os-base    = 2.0-9%{dist}%{?buildid}
-Requires: open-power-host-os-virt    = 2.0-9%{dist}%{?buildid}
-Requires: open-power-host-os-ras     = 2.0-9%{dist}%{?buildid}
+Requires: open-power-host-os-release = 2.0-10%{dist}%{?buildid}
+Requires: open-power-host-os-base    = 2.0-10%{dist}%{?buildid}
+Requires: open-power-host-os-virt    = 2.0-10%{dist}%{?buildid}
+Requires: open-power-host-os-ras     = 2.0-10%{dist}%{?buildid}
 
 # Extra packages required by Nutanix AHV.
 Requires: openvswitch >= 2.5.2-2%{dist}%{?buildid}
