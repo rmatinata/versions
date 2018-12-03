@@ -44,6 +44,7 @@ Requires: libvirt-python
 Requires: net-tools
 Requires: rsync
 Requires: lldpd
+Requires: sysstat
 
 # Required by Foundation
 Requires: ntp
