@@ -48,6 +48,7 @@ Requires: sysstat
 
 # Required by Foundation
 Requires: ntp
+Requires: smartmontools
 
 # Nice to haves.
 Requires(post): nano
