@@ -188,19 +188,20 @@ rm -rf $RPM_BUILD_ROOT
         /bin/systemctl daemon-reload >dev/null || :
     fi
 %endif
+# Mask the service to ensure old RPMS do not succeed in restarting the service 
+# on upgrade 
+/bin/systemctl mask %{name}.service || :
 
 
 %postun
-%if 0%{?systemd_postun_with_restart:1}
-    %systemd_postun_with_restart %{name}.service
+%if 0%{?systemd_postun:1}
+    %systemd_postun %{name}.service
 %else
     /bin/systemctl daemon-reload >/dev/null 2>&1 || :
-    if [ "$1" -ge "1" ] ; then
-    # Package upgrade, not uninstall
-        /bin/systemctl try-restart %{name}.service >/dev/null 2>&1 || :
-    fi
 %endif
 
+%posttrans
+/bin/systemctl unmask %{name}.service || :
 
 %files -n python-openvswitch
 %{python_sitelib}/ovs
